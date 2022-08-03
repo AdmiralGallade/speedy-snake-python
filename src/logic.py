@@ -1,5 +1,5 @@
 import random
-from typing import List, Dict
+from typing import List
 
 """
 This file can be a nice home for your Battlesnake's logic and helper functions.
@@ -7,7 +7,6 @@ This file can be a nice home for your Battlesnake's logic and helper functions.
 We have started this for you, and included some logic to remove your Battlesnake's 'neck'
 from the list of possible moves!
 """
-
 def get_info() -> dict:
     """
     This controls your Battlesnake appearance and author permissions.
@@ -54,22 +53,25 @@ def choose_move(data: dict) -> str:
 
     # TODO: Step 1 - Don't hit walls.
     # Use information from `data` and `my_head` to not move beyond the game board.
-    # board = data['board']
-    # board_height = ?
-    # board_width = ?
+    board = data['board']
+    
+    possible_moves = _avoid_walls(board, possible_moves)
 
-    # TODO: Step 2 - Don't hit yourself.
+    # TODO: Step 2 - Don't hit yourself. TODO: Step 3 - Don't collide with others.
     # Use information from `my_body` to avoid moves that would collide with yourself.
-
-    # TODO: Step 3 - Don't collide with others.
     # Use information from `data` to prevent your Battlesnake from colliding with others.
+    snakes = data["snakes"]
+    
+    possible_moves = _avoid_snakes(my_head, snakes, possible_moves)
 
     # TODO: Step 4 - Find food.
     # Use information in `data` to seek out and find food.
     # food = data['board']['food']
 
     # Choose a random direction from the remaining possible_moves to move in, and then return that move
-    move = random.choice(possible_moves)
+    move = _find_food(my_head, data["food"], possible_moves)
+    if (move == "none"):
+        move = random.choice(possible_moves)
     # TODO: Explore new strategies for picking a move that are better than random
 
     print(f"{data['game']['id']} MOVE {data['turn']}: {move} picked from all valid options in {possible_moves}")
@@ -99,3 +101,98 @@ def _avoid_my_neck(my_body: dict, possible_moves: List[str]) -> List[str]:
         possible_moves.remove("up")
 
     return possible_moves
+
+def _avoid_walls(my_head: dict, board: dict, possible_moves: List[str]) -> List[str]:
+    board_height = board["height"]
+    board_width = board["width"]
+
+    if my_head["x"] == (board_width - 1):
+        possible_moves.remove("right")
+    elif my_head["x"] == 0:
+        possible_moves.remove("left")
+        
+    if my_head["y"] == (board_height - 1):
+        possible_moves.remove("up")
+    elif my_head["y"] == 0:
+        possible_moves.remove("down")
+        
+    return possible_moves
+        
+def _avoid_snakes(my_head: dict, snakes: dict, possible_moves: List[str]) -> List[str]:
+    for snake in snakes:
+        for coord in snake["body"]:
+            if coord["x"] == my_head["x"]:
+                if coord["y"] > my_head["y"]:
+                    possible_moves.remove("up")
+                else:
+                    possible_moves.remove("down")
+            elif coord["y"] == my_head["y"]:
+                if coord["x"] > my_head["x"]:
+                    possible_moves.remove("right")
+                else:
+                    possible_moves.remove("left")
+    
+    return possible_moves
+
+def _find_food(my_head: dict, food: list, possible_moves: List[str]) -> str:
+    if food.len() == 0:
+        return "none"
+    
+    currLow: int = 21
+    closestCoord: dict = {"x":11, "y":11}
+    
+    for coord in food:
+        distX = abs(coord["x"] - my_head["x"])
+        distY = abs(coord["y"] - my_head["y"])
+        
+        curr = distX + distY
+        
+        if (curr < currLow):
+            currLow = curr
+            closestCoord = coord
+            
+    currX: str
+    currY: str
+    
+    if closestCoord["x"] > my_head["x"]:
+        currX = "right"
+    elif closestCoord["x"] < my_head["x"]:
+        currX =  "left"
+
+    if closestCoord["y"] > my_head["y"]:
+        currY = "up"
+    elif closestCoord["y"] < my_head["y"]:
+        currY = "down"
+        
+    if (possible_moves.index(currX)):
+        return currX
+    elif(possible_moves.index(currY)):
+        return currY
+    else:
+        return "none"
+    
+def floodFill(board: dict, start_pos: dict, snake_squares: List[dict]):
+    w, h = board["width"], board["height"]
+    board_matrix = [[0 for x in range(w)] for y in range(h)]
+    
+    for coord in snake_squares:
+        board_matrix[coord["y"]][coord["x"]] = 1
+        
+    return fill(start_pos["x"], start_pos["y"], board_matrix, w, h, 0)
+        
+def fill(x, y, board, w, h, count):
+    if board[y][x] == 0:
+        board[y][x] = 1
+        count += 1
+        if x > 0:
+            fill(x-1, y, board, w, h)
+        if x < len(w - 1):
+            fill(x+1, y, board, w, h)
+        if y > 0:
+            fill(x, y-1, board, w, h)
+        if y < h:
+            fill(x, y+1, board, w, h)
+            
+    return count
+    
+    
