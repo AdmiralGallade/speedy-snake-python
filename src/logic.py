@@ -55,7 +55,7 @@ def choose_move(data: dict) -> str:
     # Use information from `data` and `my_head` to not move beyond the game board.
     board = data['board']
     
-    possible_moves = _avoid_walls(board, possible_moves)
+    possible_moves = _avoid_walls(my_head, board, possible_moves)
 
     # TODO: Step 2 - Don't hit yourself. TODO: Step 3 - Don't collide with others.
     # Use information from `my_body` to avoid moves that would collide with yourself.
@@ -63,7 +63,9 @@ def choose_move(data: dict) -> str:
     snakes = data["snakes"]
     
     possible_moves = _avoid_snakes(my_head, snakes, possible_moves)
-
+    
+    possible_moves = _avoid_being_eaten(my_head, _get_enemy_moves(), possible_moves)
+    
     # TODO: Step 4 - Find food.
     # Use information in `data` to seek out and find food.
     # food = data['board']['food']
@@ -133,6 +135,42 @@ def _avoid_snakes(my_head: dict, snakes: dict, possible_moves: List[str]) -> Lis
                     possible_moves.remove("left")
     
     return possible_moves
+
+def _get_enemy_moves(snakes: dict, my_snake: dict) -> List[dict]:
+    enemy_moves = []
+
+    for snake in snakes: 
+        # only care about larger or same sized snakes 
+        if snake["length"] >=  my_snake["length"]:
+            # only care about snakes close by 
+            if abs(snake["head"]["x"] - my_snake["head"]["x"]) < 3 and abs(snake["head"]["y"] - my_snake["head"]["y"]) < 3:
+
+                coord_x = snake["head"]["x"]
+                coord_y = snake["head"]["y"]
+                
+                enemy_moves.append({"x": coord_x - 1, "y": coord_y})
+                enemy_moves.append({"x": coord_x + 1, "y": coord_y})
+                enemy_moves.append({"x": coord_x, "y": coord_y - 1})
+                enemy_moves.append({"x": coord_x, "y": coord_y + 1})
+
+    return enemy_moves; 
+
+
+def _avoid_being_eaten(my_head: dict, enemy_moves: List[dict], possible_moves: List[str]) -> List[str]:
+    for coord in enemy_moves:
+        if coord["x"] == my_head["x"] and coord["y"] > my_head["y"]:
+            if "up" in possible_moves: 
+                possible_moves.remove("up")
+            elif "down" in possible_moves:
+                possible_moves.remove("down")
+        elif coord["y"] == my_head["y"] and coord["x"] > my_head["x"]:
+            if "right" in possible_moves:
+                possible_moves.remove("right")
+            elif "left" in possible_moves:
+                possible_moves.remove("left")
+
+    return possible_moves
+
 
 def _find_food(my_head: dict, food: list, possible_moves: List[str]) -> str:
     if food.len() == 0:
