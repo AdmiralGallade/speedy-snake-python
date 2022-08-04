@@ -158,16 +158,20 @@ def _get_enemy_moves(snakes: dict, my_snake: dict) -> List[dict]:
 
 def _avoid_being_eaten(my_head: dict, enemy_moves: List[dict], possible_moves: List[str]) -> List[str]:
     for coord in enemy_moves:
-        if coord["x"] == my_head["x"] and coord["y"] > my_head["y"]:
-            if "up" in possible_moves: 
-                possible_moves.remove("up")
-            elif "down" in possible_moves:
-                possible_moves.remove("down")
-        elif coord["y"] == my_head["y"] and coord["x"] > my_head["x"]:
-            if "right" in possible_moves:
-                possible_moves.remove("right")
-            elif "left" in possible_moves:
-                possible_moves.remove("left")
+        if coord["x"] == my_head["x"]:
+        	if coord["y"] > my_head["y"]:
+            	if "up" in possible_moves: 
+                	possible_moves.remove("up")
+            else:
+            	if "down" in possible_moves:
+                	possible_moves.remove("down")
+        elif coord["y"] == my_head["y"]:
+        	if coord["x"] > my_head["x"]:
+            	if "right" in possible_moves:
+                	possible_moves.remove("right")
+            else:
+            	if "left" in possible_moves:
+                	possible_moves.remove("left")
 
     return possible_moves
 
